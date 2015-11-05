@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+echo Compile and run java bomb
+javac ../java_bomb/bomb.java -d .
+java bomb &
+
+pid=$(jps | grep bomb | cut -d ' ' -f 1)
+echo PID=$pid
+
+kill -SIGSTOP $pid
+sleep 1
+
+echo Sample
+jstat -J-Djstat.showUnsupported=true -snap $pid | grep -v perfdata > $pid.jstat_out
+cp $TMPDIR/hsperfdata_weiyulan/$pid .
+
+sleep 1
+kill -SIGCONT $pid
+kill -SIGKILL $pid
+rm bomb.class
+

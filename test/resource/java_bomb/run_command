@@ -1,0 +1,1 @@
+java -server -cp tmp -Xmx256m -Xmn64m -XX:MaxPermSize=64m -XX:ParallelGCThreads=2 -XX:+UseConcMarkSweepGC -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=70 -XX:CMSFullGCsBeforeCompaction=5 -XX:+UseCMSCompactAtFullCollection -XX:CMSMaxAbortablePrecleanTime=5000 -verbose:gc bomb

@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+# vim: set textwidth=0:
+
+if [ "$1" == "full" ];
+then
+    full=1;
+fi
+
+function stop_test {
+    echo "==== CLEAN ===="
+    read -s -t 5 -n1 -p "Press D to stop test with cleaning or press other keys to stop test"
+    if [ "$REPLY" == "d" ];
+    then
+        rm -v -rf tmp;
+    fi
+    echo
+    exit
+}
+
+function normal_test {
+    printf "\033[36m"
+    if [ $echo_command == 1 ]; then echo '$ '$@; fi
+    printf "\033[32m"
+    $@
+    RETURN_CODE=$?
+    printf "\033[0m"
+    if [ $RETURN_CODE -ne 0 ] ; then stop_test ; fi
+}
+
+function full_test {
+    if [ -n "$full" ] ;
+    then 
+        normal_test $@;
+    fi
+}
+
+function full_test_bg {
+    if [ -n "$full" ] ;
+    then 
+        printf "\033[36m"
+        if [ $echo_command == 1 ]; then echo '(background)$ '$@; fi
+        printf "\033[0m"
+        $@ &
+        LAST_PID=$!
+    fi
+}
+
+INCLUDE_DIR=../
+JPS=/usr/bin/jps
+JSTAT=/usr/bin/jstat
+JAVAC=/usr/bin/javac
+JAVA=/usr/bin/java
+C_COMPILE_PARAMS="-std=gnu99 -Wall -Wextra -Wconversion -g -Iframework -I$INCLUDE_DIR"
+
+echo "==== TEST OF HSPERFDATA_PARSER ====" 
+
+# check test environment
+function check_test_env {
+    echo -n "Check $1... "
+    which $1
+    if [ $? -ne 0 ] ; then echo "$1 is not found"; stop_test ; fi
+}
+check_test_env cc
+check_test_env python
+check_test_env valgrind
+check_test_env $JAVA
+check_test_env $JAVAC
+check_test_env $JPS
+
+# create a tmp directory when not exists
+mkdir -p tmp
+
+echo "==== COMPILE ===="
+
+echo_command=1
+# prepare java programs
+full_test $JAVAC resource/java_bomb/bomb.java -d tmp
+full_test $JAVAC resource/java_do_nothing/do_nothing.java -d tmp
+
+# compile test framework
+normal_test cc -c framework/CuTest.c -o tmp/CuTest.o  # compile CuTest
+
+# unit test
+normal_test cc $C_COMPILE_PARAMS -c script/unittest.c -o tmp/unittest.o  # compile unit test
+normal_test cc tmp/CuTest.o tmp/unittest.o -o tmp/unittest.out  # link
+
+full_test cc $C_COMPILE_PARAMS -c script/unittest_full.c -o tmp/unittest_full.o  # compile unit test
+full_test cc tmp/CuTest.o tmp/unittest_full.o -o tmp/unittest_full.out  # link
+
+# additional test for get_all_jvm_pid()
+full_test cc $C_COMPILE_PARAMS script/Test_get_all_jvm_pid.c -o tmp/Test_get_all_jvm_pid.out
+
+# additional test for Test_get_hsperfdata_by_pid()
+full_test cc $C_COMPILE_PARAMS script/Test_get_hsperfdata_by_pid.c -o tmp/Test_get_hsperfdata_by_pid_full.out
+
+# additional test for _hashmap.h
+full_test cc $C_COMPILE_PARAMS script/Test__hashmap.c -o tmp/Test__hashmap.out
+
+# integration test
+normal_test cc $C_COMPILE_PARAMS script/Test_parser.c -o tmp/Test_parser.out
+full_test cc $C_COMPILE_PARAMS script/Test_parser_full.c -o tmp/Test_parser_full.out
+full_test cc $C_COMPILE_PARAMS script/Test_jstat_metrics.c -o tmp/Test_jstat_metrics.out
+
+# performance test
+full_test cc $C_COMPILE_PARAMS script/Test_perf_hashmap.c -o tmp/Test_perf_hashmap.out
+full_test cc $C_COMPILE_PARAMS script/Test_perf_hash_function.c -o tmp/Test_perf_hash_function.out
+full_test cc $C_COMPILE_PARAMS script/Test_perf_parse.c -o tmp/Test_perf_parse.out
+
+# memory test
+full_test cc $C_COMPILE_PARAMS script/Test_memory.c -o tmp/Test_memory.out 
+#echo_command=0
+
+echo "==== UNIT TEST ===="
+normal_test tmp/unittest.out
+full_test tmp/unittest_full.out
+
+echo "==== ADDITIONAL TEST for get_all_jvm_pid() ===="
+full_test python script/Test_get_all_jvm_pid.py $JAVA $JPS
+
+echo "==== ADDITIONAL TEST for get_hsperfdata_by_pid() ===="
+full_test python script/Test_get_hsperfdata_by_pid.py
+
+echo "==== ADDITIONAL TEST for _hashmap.h ===="
+full_test python script/Test__hashmap.py
+
+echo "==== INTEGRATION TEST ===="
+normal_test python script/Test_parser.py
+full_test python script/Test_parser_full.py
+full_test_bg `cat resource/java_do_nothing/run_command`
+full_test sleep 2  # ready for the java vm
+full_test tmp/Test_jstat_metrics.out $JSTAT $LAST_PID
+full_test kill -9 $LAST_PID
+full_test sleep 2  # ready for the java vm
+
+echo "==== PERFORMANCE TEST ===="
+full_test tmp/Test_perf_hashmap.out
+full_test tmp/Test_perf_hash_function.out
+full_test tmp/Test_perf_parse.out $JAVA
+
+echo "==== MEMORY TEST ===="
+full_test python script/Test_memory.py
+
+echo "==== ALL RIGHT ===="
+echo "Passed all test cases successfully."
+
+stop_test
+
