@@ -2,6 +2,15 @@
 
 A C library to get jstat-like metrics for running jvms.
 
+The _jstat_ tool displays performance statistics for an instrumented HotSpot Java
+virtual machine (JVM). Java developers concern performance statistics when
+performance tuning or tracking memory leak problem. _jstat_ is easy-to-use when
+coping with single JVM. Because _jstat_ is a java program itself, cost highly
+when run a _jstat_, it is hard to track trousands of JVMs in the cluster. 
+
+With _libcjstat_, you can collect the statistics without high cost, storing them in
+InfluxDB, visualizing them by Grafana.
+
 Version: 0.1
 
 ## Features
@@ -19,8 +28,8 @@ Version: 0.1
 
 ## How to start
 
-1.  Copy folder cjstat/ to your project folder.
-2.  Include header in your code.
+1.  Copy folder cjstat/ to your project.
+2.  Include headers in your code.
 3.  Done.
 
 ## Typical usages

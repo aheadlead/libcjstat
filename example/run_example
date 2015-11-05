@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-cc -std=gnu99 -Wall -Wextra -Wconversion -g -Iframework -I../ $@
+cc -std=gnu99 -Wall -Wextra -Wconversion -Iframework -I../ $@
 ./a.out
 rm a.out
 
