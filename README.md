@@ -5,8 +5,8 @@ A C library to get jstat-like metrics for running jvms.
 The _jstat_ tool displays performance statistics for an instrumented HotSpot Java
 virtual machine (JVM). Java developers concern performance statistics when
 performance tuning or tracking memory leak problem. Tool _jstat_ from JDK is
-easy-to-use and useful when coping with single JVM. But _jstat_ is a java
-program itself, cost highly when raise a _jstat_, it is hard to track trousands
+easy-to-use and useful when coping with a single JVM. But _jstat_ is a java
+program itself, cost highly when raising a _jstat_, it is hard to track trousands
 of JVMs in the cluster. 
 
 With _libcjstat_, you can build a JVM cluster monitor easily, collecting the
