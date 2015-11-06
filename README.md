@@ -10,8 +10,8 @@ program itself, cost highly when raising a _jstat_, it is hard to track trousand
 of JVMs in the cluster. 
 
 With _libcjstat_, you can build a JVM cluster monitor easily, collecting the
-statistics without high cost, storing them in InfluxDB, visualizing them by
-Grafana.
+statistics without high cost, storing them in [InfluxDB](https://influxdb.com),
+visualizing them by [Grafana](http://grafana.org).
 
 Version: 0.1
 
