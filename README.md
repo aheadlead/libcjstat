@@ -22,7 +22,7 @@ Version: 0.1
 * No external dependencies.
 * Tested.
 
-## Requiremnts
+## Requirements
 
 * GNU99 C Compiler
 * Java 7
